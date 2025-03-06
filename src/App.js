@@ -1,10 +1,9 @@
-import MyComponent from './MyComponent';
+import './App.css';
 
 function App() {
     return (
-        <div>
-            <h1>Hello, React World!</h1>
-            <MyComponent />
+        <div className="container">
+            <h1>Hello, Styled React!</h1>
         </div>
     );
 }
