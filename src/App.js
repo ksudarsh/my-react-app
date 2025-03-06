@@ -1,13 +1,27 @@
+import { useState } from "react";
+
 function App() {
-    const myStyle = {
-        color: "white",
-        backgroundColor: "blue",
-        padding: "10px",
-        borderRadius: "5px",
-        textAlign: "center",
+    const [name, setName] = useState("");
+
+    const handleChange = (event) => {
+        setName(event.target.value);
     };
 
-    return <h1 style={myStyle}>Hello, Inline Styled React!</h1>;
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        alert(`Hello, ${name}!`);
+    };
+
+    return (
+        <div>
+            <h1>React Form</h1>
+            <form onSubmit={handleSubmit}>
+                <input type="text" value={name} onChange={handleChange} placeholder="Enter your name" />
+                <button type="submit">Submit</button>
+            </form>
+            <p>Your name is: {name}</p>
+        </div>
+    );
 }
 
 export default App;
