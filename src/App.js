@@ -1,25 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
-    const [name, setName] = useState("");
+    const [users, setUsers] = useState([]);
 
-    const handleChange = (event) => {
-        setName(event.target.value);
-    };
-
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        alert(`Hello, ${name}!`);
-    };
+    useEffect(() => {
+        fetch("https://jsonplaceholder.typicode.com/users")
+            .then((response) => response.json())
+            .then((data) => setUsers(data));
+    }, []);
 
     return (
         <div>
-            <h1>React Form</h1>
-            <form onSubmit={handleSubmit}>
-                <input type="text" value={name} onChange={handleChange} placeholder="Enter your name" />
-                <button type="submit">Submit</button>
-            </form>
-            <p>Your name is: {name}</p>
+            <h1>User List</h1>
+            <ul>
+                {users.map((user) => (
+                    <li key={user.id}>{user.name} - {user.email}</li>
+                ))}
+            </ul>
         </div>
     );
 }
