@@ -33,17 +33,27 @@ function doPost(e) {
 
     const lastRow = sheet.getLastRow();
     const formattedName = normalizeName(data.name); // Normalize the name from the form
+    const formattedEmail = normalizeEmail(data.email);
+    const formattedPhone = normalizePhone(data.phone);
 
-    // Check for duplicate name
+    // Check for duplicate (name, email, and phone)
     if (lastRow > 1) {
-      const names = sheet.getRange(2, nameColumnIndex + 1, lastRow - 1, 1).getValues(); // Get all names in column Name
-       const duplicate = names.flat().some(existingName => {
-        return areNamesSimilar(formattedName, normalizeName(existingName));
+      const existingData = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues(); // Get all data
+
+      const duplicate = existingData.some(row => {
+        const existingName = normalizeName(row[nameColumnIndex]);
+        const existingEmail = normalizeEmail(row[emailColumnIndex]);
+        const existingPhone = normalizePhone(row[phoneColumnIndex]);
+        return (
+          areNamesSimilar(formattedName, existingName) &&
+          areEmailsSimilar(formattedEmail, existingEmail) &&
+          (arePhonesSimilar(formattedPhone, existingPhone) || (formattedPhone && existingPhone === null) || (existingPhone && formattedPhone === null))
+        );
       });
 
       if (duplicate) {
         return ContentService.createTextOutput(
-          JSON.stringify({ error: "Name already exists" })
+          JSON.stringify({ error: "Duplicate entry found (name, email, and phone number combination)" })
         ).setMimeType(ContentService.MimeType.JSON);
       }
     }
@@ -61,7 +71,7 @@ function doPost(e) {
 
     // Write the data to the correct columns
     sheet.getRange(lastRow + 1, nameColumnIndex + 1).setValue(data.name); // Original name
-    if (emailColumnIndex !== -1){
+    if (emailColumnIndex !== -1) {
       sheet.getRange(lastRow + 1, emailColumnIndex + 1).setValue(data.email);
     }
     if (phoneColumnIndex !== -1) {
@@ -102,5 +112,27 @@ function areNamesSimilar(name1, name2) {
 
   // Check all combinations
   return (words1[0] === words2[0] && words1[1] === words2[1]) || // Same order
-         (words1[0] === words2[1] && words1[1] === words2[0]);   // Reverse order
+    (words1[0] === words2[1] && words1[1] === words2[0]);   // Reverse order
+}
+
+// Helper function to normalize email (lowercase, trim)
+function normalizeEmail(email) {
+  if (typeof email !== 'string') return ""; // Handle non-string inputs
+  return email.toLowerCase().trim();
+}
+
+// Helper function to check for email similarity
+function areEmailsSimilar(email1, email2) {
+  return email1 === email2;
+}
+
+// Helper function to normalize phone (remove non-numeric chars, trim)
+function normalizePhone(phone) {
+  if (typeof phone !== 'string' || phone === "") return null; // Handle non-string inputs or empty value
+  return phone.replace(/[^0-9]/g, '').trim();
+}
+
+// Helper function to check for phone number similarity
+function arePhonesSimilar(phone1, phone2) {
+  return phone1 === phone2;
 }
