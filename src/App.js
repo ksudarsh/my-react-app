@@ -7,9 +7,17 @@ function App() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
+  const [isEmailValid, setIsEmailValid] = useState(true); // New state for email validation
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    // Check email format before submit
+    if (!isEmailValid) {
+      setMessage("Invalid email format.");
+      return; // Stop submission if the email is invalid
+    }
+
     try {
       const response = await axios.post("http://localhost:5000/submit", {
         name,
@@ -35,15 +43,26 @@ function App() {
     if (e.target.value === "") {
       setEmail("");
       setPhone("");
+      setIsEmailValid(true); //reset if name is cleared
     }
   };
+
+  // Email format validation
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
+    setIsEmailValid(emailRegex.test(e.target.value));
+    //check if the email is valid.
+  };
+
   useEffect(() => {
     // clear the email and phone if name is empty
-    if (name === ""){
-        setEmail("");
-        setPhone("");
+    if (name === "") {
+      setEmail("");
+      setPhone("");
+      setIsEmailValid(true); //reset if name is cleared
     }
-  }, [name])
+  }, [name]);
 
   return (
     <div className="container">
@@ -60,7 +79,7 @@ function App() {
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)} // Set email on change
+          onChange={handleEmailChange} // Check email format on change
         />
         <input
           type="tel"
@@ -71,6 +90,8 @@ function App() {
         <button type="submit">Submit</button>
       </form>
       <p>{message}</p>
+      {/* Display email validation message if email is invalid */}
+      {!isEmailValid && email.length >0 && <p style={{ color: "red" }}>Invalid email format.</p>}
     </div>
   );
 }
