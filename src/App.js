@@ -12,8 +12,8 @@ function App() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Check email format before submit
-    if (!isEmailValid) {
+    // Check email format before submit if email is present
+    if (email && !isEmailValid) {
       setMessage("Invalid email format.");
       return; // Stop submission if the email is invalid
     }
@@ -50,9 +50,13 @@ function App() {
   // Email format validation
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
-    setIsEmailValid(emailRegex.test(e.target.value));
-    //check if the email is valid.
+    if (e.target.value){
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
+        setIsEmailValid(emailRegex.test(e.target.value));
+        //check if the email is valid.
+    } else {
+        setIsEmailValid(true)
+    }
   };
 
   useEffect(() => {
@@ -91,7 +95,9 @@ function App() {
       </form>
       <p>{message}</p>
       {/* Display email validation message if email is invalid */}
-      {!isEmailValid && email.length >0 && <p style={{ color: "red" }}>Invalid email format.</p>}
+      {!isEmailValid && email.length > 0 && (
+        <p style={{ color: "red" }}>Invalid email format.</p>
+      )}
     </div>
   );
 }

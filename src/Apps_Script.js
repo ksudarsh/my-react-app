@@ -18,23 +18,17 @@ function doPost(e) {
       ).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // Check if either email or phone is present
-    if (emailColumnIndex === -1 && phoneColumnIndex === -1) {
-      return ContentService.createTextOutput(
-        JSON.stringify({ error: "Email or Phone Number column is missing" })
-      ).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    if (!data.email && !data.phone) {
-      return ContentService.createTextOutput(
-        JSON.stringify({ error: "Either Email or Phone Number must be provided" })
-      ).setMimeType(ContentService.MimeType.JSON);
-    }
+    if (!data.name) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ error: "Name must be provided" })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
 
     const lastRow = sheet.getLastRow();
     const formattedName = normalizeName(data.name); // Normalize the name from the form
     const formattedEmail = normalizeEmail(data.email);
     const formattedPhone = normalizePhone(data.phone);
+    let errorMessage = "";
 
     // Check for duplicate (name, email, and phone)
     if (lastRow > 1) {
@@ -44,16 +38,29 @@ function doPost(e) {
         const existingName = normalizeName(row[nameColumnIndex]);
         const existingEmail = normalizeEmail(row[emailColumnIndex]);
         const existingPhone = normalizePhone(row[phoneColumnIndex]);
-        return (
-          areNamesSimilar(formattedName, existingName) &&
-          areEmailsSimilar(formattedEmail, existingEmail) &&
-          (arePhonesSimilar(formattedPhone, existingPhone) || (formattedPhone && existingPhone === null) || (existingPhone && formattedPhone === null))
-        );
-      });
+        if(areNamesSimilar(formattedName, existingName) && formattedEmail && existingEmail && areEmailsSimilar(formattedEmail, existingEmail)) {
+            errorMessage = "Duplicate entry found (name and email combination)";
+            return true; // Duplicate name/email found
+        }
+        if(areNamesSimilar(formattedName, existingName) && formattedPhone && existingPhone && arePhonesSimilar(formattedPhone, existingPhone)) {
+            errorMessage = "Duplicate entry found (name and phone number combination)";
+            return true; // Duplicate name/phone found
+        }
+        if(areNamesSimilar(formattedName, existingName) && formattedPhone && existingPhone === null){
+            errorMessage = "Duplicate entry found (name and phone number combination)";
+            return true;
+        }
+        if(areNamesSimilar(formattedName, existingName) && formattedEmail && existingEmail === null){
+            errorMessage = "Duplicate entry found (name and email combination)";
+            return true;
+        }
 
+        return false; // No duplicate found in this row
+      });
+      
       if (duplicate) {
         return ContentService.createTextOutput(
-          JSON.stringify({ error: "Duplicate entry found (name, email, and phone number combination)" })
+          JSON.stringify({ error: errorMessage })
         ).setMimeType(ContentService.MimeType.JSON);
       }
     }
@@ -117,7 +124,7 @@ function areNamesSimilar(name1, name2) {
 
 // Helper function to normalize email (lowercase, trim)
 function normalizeEmail(email) {
-  if (typeof email !== 'string') return ""; // Handle non-string inputs
+  if (typeof email !== 'string' || email === "") return null; // Handle non-string inputs
   return email.toLowerCase().trim();
 }
 
