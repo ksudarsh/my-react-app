@@ -18,51 +18,56 @@ function doPost(e) {
       ).setMimeType(ContentService.MimeType.JSON);
     }
 
+    // Check for required data
     if (!data.name) {
-        return ContentService.createTextOutput(
-          JSON.stringify({ error: "Name must be provided" })
-        ).setMimeType(ContentService.MimeType.JSON);
-      }
+      return ContentService.createTextOutput(
+        JSON.stringify({ error: "Name must be provided" })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (!data.email && !data.phone) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ error: "Either Email or Phone Number must be provided" })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
 
     const lastRow = sheet.getLastRow();
     const formattedName = normalizeName(data.name); // Normalize the name from the form
     const formattedEmail = normalizeEmail(data.email);
     const formattedPhone = normalizePhone(data.phone);
     let errorMessage = "";
+    let duplicateFound = false;
 
     // Check for duplicate (name, email, and phone)
     if (lastRow > 1) {
       const existingData = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues(); // Get all data
 
-      const duplicate = existingData.some(row => {
+      duplicateFound = existingData.some(row => {
         const existingName = normalizeName(row[nameColumnIndex]);
         const existingEmail = normalizeEmail(row[emailColumnIndex]);
         const existingPhone = normalizePhone(row[phoneColumnIndex]);
-        if(areNamesSimilar(formattedName, existingName) && formattedEmail && existingEmail && areEmailsSimilar(formattedEmail, existingEmail)) {
-            errorMessage = "Duplicate entry found (name and email combination)";
-            return true; // Duplicate name/email found
-        }
-        if(areNamesSimilar(formattedName, existingName) && formattedPhone && existingPhone && arePhonesSimilar(formattedPhone, existingPhone)) {
-            errorMessage = "Duplicate entry found (name and phone number combination)";
-            return true; // Duplicate name/phone found
-        }
-        if(areNamesSimilar(formattedName, existingName) && formattedPhone && existingPhone === null){
-            errorMessage = "Duplicate entry found (name and phone number combination)";
-            return true;
-        }
-        if(areNamesSimilar(formattedName, existingName) && formattedEmail && existingEmail === null){
-            errorMessage = "Duplicate entry found (name and email combination)";
-            return true;
-        }
 
-        return false; // No duplicate found in this row
+        if (areNamesSimilar(formattedName, existingName)) {
+          if (formattedEmail && existingEmail) { //if the new entry has an email and the old one too
+            if (areEmailsSimilar(formattedEmail, existingEmail)) {
+              errorMessage = "Duplicate entry found (name and email combination)";
+              return true;
+            }
+          }
+          if (formattedPhone && existingPhone) { //if the new entry has a phone and the old one too
+            if (arePhonesSimilar(formattedPhone, existingPhone)) {
+              errorMessage = "Duplicate entry found (name and phone number combination)";
+              return true;
+            }
+          }
+        }
+        return false; // No duplicate found for this row
       });
-      
-      if (duplicate) {
-        return ContentService.createTextOutput(
-          JSON.stringify({ error: errorMessage })
-        ).setMimeType(ContentService.MimeType.JSON);
-      }
+    }
+
+    if (duplicateFound) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ error: errorMessage })
+      ).setMimeType(ContentService.MimeType.JSON);
     }
 
     // Get the current timestamp
@@ -77,7 +82,7 @@ function doPost(e) {
     sheet.insertRowAfter(lastRow);
 
     // Write the data to the correct columns
-    sheet.getRange(lastRow + 1, nameColumnIndex + 1).setValue(data.name); // Original name
+    sheet.getRange(lastRow + 1, nameColumnIndex + 1).setValue(convertToCamelCase(data.name)); //Convert the name to camel case
     if (emailColumnIndex !== -1) {
       sheet.getRange(lastRow + 1, emailColumnIndex + 1).setValue(data.email);
     }
@@ -142,4 +147,16 @@ function normalizePhone(phone) {
 // Helper function to check for phone number similarity
 function arePhonesSimilar(phone1, phone2) {
   return phone1 === phone2;
+}
+
+// Helper function to convert string to camel case and remove multiple spaces
+function convertToCamelCase(str) {
+  if (typeof str !== 'string') return ""; // Handle non-string inputs
+  return str
+    .trim() // Remove leading/trailing spaces
+    .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
+    .toLowerCase() // Convert to lowercase
+    .split(' ') // Split into an array of words
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
+    .join(' '); // Join the words back together
 }

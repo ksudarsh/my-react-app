@@ -16,7 +16,7 @@ app.use(express.json());
 app.post("/submit", async (req, res) => {
   try {
     const response = await axios.post(
-      "https://script.google.com/macros/s/AKfycbz7b0kq9FrIA1ko95Wxl2EO5cayzmdAnYxI5eHkanJUo7TTczc4MqLicnGItEWXFkHd/exec", // Replace this with the Google Apps Script URL you copied
+      "https://script.google.com/macros/s/AKfycbyD_fjLa9wh_M14HqPC21gMukQl09zD6lyYDnKBrWynAJDJbNj8PZ1vnPgkOSjrVA6T/exec", // Replace this with the Google Apps Script URL you copied
       req.body
     );
     res.json(response.data);

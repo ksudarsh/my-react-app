@@ -12,6 +12,12 @@ function App() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    // Check if email or phone is present before submit
+    if (!email && !phone) {
+      setMessage("Either Email or Phone Number must be provided");
+      return; // Stop submission
+    }
+
     // Check email format before submit if email is present
     if (email && !isEmailValid) {
       setMessage("Invalid email format.");
