@@ -32,11 +32,14 @@ function doPost(e) {
     }
 
     const lastRow = sheet.getLastRow();
+    const formattedName = normalizeName(data.name); // Normalize the name from the form
 
     // Check for duplicate name
     if (lastRow > 1) {
       const names = sheet.getRange(2, nameColumnIndex + 1, lastRow - 1, 1).getValues(); // Get all names in column Name
-      const duplicate = names.flat().includes(data.name); // Check if the name already exists
+       const duplicate = names.flat().some(existingName => {
+        return areNamesSimilar(formattedName, normalizeName(existingName));
+      });
 
       if (duplicate) {
         return ContentService.createTextOutput(
@@ -57,7 +60,7 @@ function doPost(e) {
     sheet.insertRowAfter(lastRow);
 
     // Write the data to the correct columns
-    sheet.getRange(lastRow + 1, nameColumnIndex + 1).setValue(data.name);
+    sheet.getRange(lastRow + 1, nameColumnIndex + 1).setValue(data.name); // Original name
     if (emailColumnIndex !== -1){
       sheet.getRange(lastRow + 1, emailColumnIndex + 1).setValue(data.email);
     }
@@ -76,4 +79,28 @@ function doPost(e) {
       JSON.stringify({ error: "Error writing to sheet: " + error })
     ).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// Helper function to normalize a name (lowercase, trim, remove extra spaces)
+function normalizeName(name) {
+  if (typeof name !== 'string') return ""; // Handle non-string inputs
+  return name.toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
+// Helper function to compare two normalized names (check all combinations of the names)
+function areNamesSimilar(name1, name2) {
+  const words1 = name1.split(' ').filter(word => word !== "");
+  const words2 = name2.split(' ').filter(word => word !== "");
+
+  if (words1.length !== words2.length) {
+    return false; // Different number of words cannot be similar
+  }
+
+  if (words1.length === 1 && words2.length === 1) {
+    return words1[0] === words2[0]; // Both names have only one word
+  }
+
+  // Check all combinations
+  return (words1[0] === words2[0] && words1[1] === words2[1]) || // Same order
+         (words1[0] === words2[1] && words1[1] === words2[0]);   // Reverse order
 }

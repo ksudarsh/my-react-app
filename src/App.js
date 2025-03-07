@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
 
@@ -20,15 +20,30 @@ function App() {
         setMessage(response.data.error);
       } else {
         setMessage(response.data.message);
-        setName("");
-        setEmail("");
-        setPhone("");
+        // Do not clear the fields here
       }
     } catch (error) {
       console.error("Error submitting data:", error);
       setMessage("Error submitting data.");
     }
   };
+
+  // Clear the message and other fields if name is cleared
+  const handleNameInputChange = (e) => {
+    setName(e.target.value);
+    setMessage(""); // Clear any error/success message
+    if (e.target.value === "") {
+      setEmail("");
+      setPhone("");
+    }
+  };
+  useEffect(() => {
+    // clear the email and phone if name is empty
+    if (name === ""){
+        setEmail("");
+        setPhone("");
+    }
+  }, [name])
 
   return (
     <div className="container">
@@ -38,20 +53,20 @@ function App() {
           type="text"
           placeholder="Name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={handleNameInputChange} // Call handleNameInputChange when name changes
           required
         />
         <input
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)} // Set email on change
         />
         <input
           type="tel"
           placeholder="Phone Number"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => setPhone(e.target.value)} // Set phone on change
         />
         <button type="submit">Submit</button>
       </form>
