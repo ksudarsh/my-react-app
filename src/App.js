@@ -1,9 +1,11 @@
 import { useState } from "react";
 import axios from "axios";
+import "./App.css";
 
 function App() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (event) => {
@@ -12,10 +14,16 @@ function App() {
       const response = await axios.post("http://localhost:5000/submit", {
         name,
         email,
+        phone,
       });
-      setMessage(response.data.message);
-      setName('');
-      setEmail('');
+      if (response.data.error) {
+        setMessage(response.data.error);
+      } else {
+        setMessage(response.data.message);
+        setName("");
+        setEmail("");
+        setPhone("");
+      }
     } catch (error) {
       console.error("Error submitting data:", error);
       setMessage("Error submitting data.");
@@ -23,7 +31,7 @@ function App() {
   };
 
   return (
-    <div>
+    <div className="container">
       <h1>Register</h1>
       <form onSubmit={handleSubmit}>
         <input
@@ -38,7 +46,12 @@ function App() {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
+        />
+        <input
+          type="tel"
+          placeholder="Phone Number"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
         />
         <button type="submit">Submit</button>
       </form>
